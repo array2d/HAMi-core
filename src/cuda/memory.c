@@ -39,7 +39,7 @@ const size_t cuarray_format_bytes[33] = {
     0,  // 0x1c
     0,  // 0x1d
     0,  // 0x1e
-    0,  // 0x1f       
+    0,  // 0x1f
     4   // CU_AD_FORMAT_FLOAT = 0x20
 };
 
@@ -92,46 +92,6 @@ uint64_t compute_array_alloc_bytes(const CUDA_ARRAY_DESCRIPTOR* desc) {
     return bytes;
 }
 
-CUresult cuArray3DCreate_v2(CUarray* arr, const CUDA_ARRAY3D_DESCRIPTOR* desc) {
-    LOG_DEBUG("cuArray3DCreate_v2");
-    /*uint64_t bytes*/
-    compute_3d_array_alloc_bytes(desc);
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuArray3DCreate_v2, arr, desc);
-    if (res != CUDA_SUCCESS) {
-        return res;
-    }
-    return res;
-}
-
-
-CUresult cuArrayCreate_v2(CUarray* arr, const CUDA_ARRAY_DESCRIPTOR* desc) {
-    LOG_DEBUG("cuArrayCreate_v2");
-    /*uint64_t bytes*/
-    compute_array_alloc_bytes(desc);
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuArrayCreate_v2, arr, desc);
-    if (res != CUDA_SUCCESS) {
-        return res;
-    }
-    return res;
-}
-
-
-CUresult cuArrayDestroy(CUarray arr) {
-    CUDA_ARRAY3D_DESCRIPTOR desc;
-    LOG_DEBUG("cuArrayDestroy");
-    CHECK_DRV_API(cuArray3DGetDescriptor(&desc, arr));
-    /*uint64_t bytes*/
-    compute_3d_array_alloc_bytes(&desc);
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuArrayDestroy, arr);
-    return res;
-}
-
-CUresult cuMemoryAllocate(CUdeviceptr* dptr, size_t bytesize, void* data) {
-    CUresult res;
-    res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemAlloc_v2,dptr,bytesize);
-    return res;
-}
-
 CUresult cuMemAlloc_v2(CUdeviceptr* dptr, size_t bytesize) {
     LOG_INFO("into cuMemAllocing_v2 dptr=%p bytesize=%ld",dptr,bytesize);
     ENSURE_RUNNING();
@@ -171,7 +131,7 @@ CUresult cuMemAllocManaged(CUdeviceptr* dptr, size_t bytesize, unsigned int flag
     return res;
 }
 
-CUresult cuMemAllocPitch_v2(CUdeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, 
+CUresult cuMemAllocPitch_v2(CUdeviceptr* dptr, size_t* pPitch, size_t WidthInBytes,
                                       size_t Height, unsigned int ElementSizeBytes) {
     LOG_DEBUG("cuMemAllocPitch_v2 dptr=%p (%ld,%ld)",dptr,WidthInBytes,Height);
     size_t guess_pitch = (((WidthInBytes - 1) / ElementSizeBytes) + 1) * ElementSizeBytes;
@@ -196,17 +156,6 @@ CUresult cuMemFree_v2(CUdeviceptr dptr) {
     }
     CUresult res = free_raw(dptr);
     LOG_INFO("after free_raw dptr=%p res=%d",(void *)dptr,res);
-    return res;
-}
-
-
-CUresult cuMemFreeHost(void* hptr) {
-    /*CUdeviceptr dptr;*/
-    /*CHECK_DRV_API(cuMemHostGetDevicePointer(&dptr, hptr, 0));*/
-    /*size_t bytesize;*/
-    /*CHECK_DRV_API(cuMemGetAddressRange(NULL, &bytesize, dptr));*/
-    LOG_DEBUG("cuMemFreeHost_v2 hptr=%p",hptr);
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemFreeHost, hptr);
     return res;
 }
 
@@ -251,42 +200,6 @@ CUresult cuMemHostRegister_v2(void* hptr, size_t bytesize, unsigned int flags) {
     //return CUDA_SUCCESS;
 }
 
-
-CUresult cuMemHostUnregister(void* hptr) {
-    /*CUdeviceptr dptr;*/
-    /*CUresult flag = cuMemHostGetDevicePointer(&dptr, hptr, 0);*/
-    /*size_t bytesize = 0;*/
-    /*if (flag == CUDA_SUCCESS) {*/
-    /*    // only device map registry is trackable*/
-    /*    CHECK_DRV_API(cuMemGetAddressRange(NULL, &bytesize, dptr));*/
-    /*}*/
-    LOG_DEBUG("cuMemHostUnregister hptr=%p",hptr);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemHostUnregister, hptr);
-    
-    /*if (flag == CUDA_SUCCESS && bytesize > 0) {*/
-    /*    // only device map registry is trackable*/
-    /*    DECL_MEMORY_ON_SUCCESS(res, bytesize);*/
-    /*}*/
-    //return CUDA_SUCCESS;    
-    return res;
-}
-
-
-CUresult cuMemcpy(CUdeviceptr dst, CUdeviceptr src, size_t ByteCount ){
-    LOG_DEBUG("cuMemcpy dst=%llx src=%llx count=%lu",dst,src,ByteCount);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy,dst,src,ByteCount);
-    return res;
-}
-
-CUresult cuPointerGetAttribute ( void* data, CUpointer_attribute attribute, CUdeviceptr ptr ){
-    LOG_DEBUG("cuPointGetAttribute data=%p attribute=%d ptr=%llx", data, (int)attribute,ptr);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuPointerGetAttribute,data,attribute,ptr);
-    return res;
-}
-
 CUresult cuPointerGetAttributes ( unsigned int  numAttributes, CUpointer_attribute* attributes, void** data, CUdeviceptr ptr ) {
     LOG_DEBUG("cuPointGetAttribute data=%p ptr=%llx", data, ptr);
     ENSURE_RUNNING();
@@ -299,203 +212,11 @@ CUresult cuPointerGetAttributes ( unsigned int  numAttributes, CUpointer_attribu
             LOG_DEBUG("check result = %d %d",j,*(int *)(data[cur]));
         }else{
             if (attributes[cur]==CU_POINTER_ATTRIBUTE_IS_MANAGED){
-                *(int *)(data[cur])=0;    
+                *(int *)(data[cur])=0;
             }
         }
     }
     return res;
-}
-
-CUresult cuPointerSetAttribute ( const void* value, CUpointer_attribute attribute, CUdeviceptr ptr ){
-    LOG_DEBUG("cuPointSetAttribute value=%p attribute=%d ptr=%llx", value, (int)attribute, ptr);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuPointerSetAttribute,value,attribute,ptr);
-    return res;
-}
-
-
-CUresult cuIpcCloseMemHandle(CUdeviceptr dptr){
-    LOG_DEBUG("cuIpcCloseMemHandle dptr=%llx",dptr);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuIpcCloseMemHandle,dptr);
-}
-
-CUresult cuIpcGetMemHandle(CUipcMemHandle* pHandle, CUdeviceptr dptr) {
-    LOG_MSG("cuIpcGetMemHandle dptr=%llx", dptr);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuIpcGetMemHandle,pHandle,dptr);
-}
-
-CUresult cuIpcOpenMemHandle_v2 ( CUdeviceptr* pdptr, CUipcMemHandle handle, unsigned int  Flags ){
-    LOG_DEBUG("cuIpcGetMemHandle dptr=%p",pdptr);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuIpcOpenMemHandle_v2,pdptr,handle,Flags);
-}
-
-
-CUresult cuMemGetAddressRange_v2( CUdeviceptr* pbase, size_t* psize, CUdeviceptr dptr ){
-    //TODO: Translate back
-    LOG_DEBUG("cuMemGetAddressRange_v2,dptr=%llx",dptr);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemGetAddressRange_v2,pbase,psize,dptr);
-    return res;
-}
-
-CUresult cuMemcpyAsync ( CUdeviceptr dst, CUdeviceptr src, size_t ByteCount, CUstream hStream ){
-    LOG_DEBUG("cuMemcpyAsync,dst=%llx src=%llx count=%lu",dst,src,ByteCount);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyAsync,dst,src,ByteCount,hStream);
-    return res; 
-}
-
-CUresult cuMemcpyAtoD_v2( CUdeviceptr dstDevice, CUarray srcArray, size_t srcOffset, size_t ByteCount ){
-    LOG_DEBUG("cuMemcpyAtoD_v2,dst=%llx count=%lu",dstDevice,ByteCount);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyAtoD_v2,dstDevice,srcArray,srcOffset,ByteCount);
-}
-
-CUresult cuMemcpyDtoA_v2 ( CUarray dstArray, size_t dstOffset, CUdeviceptr srcDevice, size_t ByteCount ){
-    LOG_DEBUG("cuMemcpyDtoA_v2,src=%llx count=%lu",srcDevice,ByteCount);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoA_v2,dstArray,dstOffset,srcDevice,ByteCount);
-}
-
-CUresult cuMemcpyDtoD_v2 ( CUdeviceptr dstDevice, CUdeviceptr srcDevice, size_t ByteCount ){
-    LOG_DEBUG("cuMemcpyDtoD_v2,dst=%llx src=%llx count=%lu",dstDevice,srcDevice,ByteCount);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoD_v2,dstDevice,srcDevice,ByteCount);
-}
-
-CUresult cuMemcpyDtoDAsync_v2( CUdeviceptr dstDevice, CUdeviceptr srcDevice, size_t ByteCount, CUstream hStream ){
-    LOG_DEBUG("cuMemcpyDtoDAsync_v2,dst=%llx src=%llx count=%lu",dstDevice,srcDevice,ByteCount);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoDAsync_v2,dstDevice,srcDevice,ByteCount,hStream);
-}
-
-CUresult cuMemcpyDtoH_v2(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount) {
-    // TODO: compute bytesize
-    LOG_DEBUG("cuMemcpyDtoH_v2,dst=%p src=%llx count=%lu",dstHost,srcDevice,ByteCount);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoH_v2, dstHost, srcDevice, ByteCount);
-    return res;
-}
-
-CUresult cuMemcpyDtoHAsync_v2 ( void* dstHost, CUdeviceptr srcDevice, size_t ByteCount, CUstream hStream ){
-    LOG_DEBUG("cuMemcpyDtoHAsync_v2,dst=%p src=%llx count=%lu",dstHost,srcDevice,ByteCount);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoHAsync_v2,dstHost,srcDevice,ByteCount,hStream); 
-}
-
-
-CUresult cuMemcpyHtoD_v2(CUdeviceptr srcDevice, const void* dstHost, size_t ByteCount) {
-    // TODO: compute bytesize
-    LOG_DEBUG("cuMemcpyHtoD_v2,srcDevice=%llx dstHost=%p count=%lu",srcDevice,dstHost,ByteCount);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyHtoD_v2, srcDevice, dstHost, ByteCount);
-    return res;
-}
-
-CUresult cuMemcpyHtoDAsync_v2( CUdeviceptr dstDevice, const void* srcHost, size_t ByteCount, CUstream hStream ){
-    LOG_DEBUG("cuMemcpyHtoDAsync_v2,dst=%llx src=%p count=%lu",dstDevice,srcHost,ByteCount);
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyHtoDAsync_v2,dstDevice,srcHost,ByteCount,hStream);
-    return res;
-}
-
-
-CUresult cuMemcpyPeer(CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, size_t ByteCount) {
-    LOG_DEBUG("cuMemcpyPeer dstDevice=%llx srcDevice=%llx",dstDevice,srcDevice);
-    ENSURE_RUNNING();
-    CUresult res=CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyPeer,dstDevice,dstContext,srcDevice,srcContext,ByteCount);
-    return res;
-}
-
-CUresult cuMemcpyPeerAsync ( CUdeviceptr dstDevice, CUcontext dstContext, CUdeviceptr srcDevice, CUcontext srcContext, size_t ByteCount, CUstream hStream){
-    LOG_DEBUG("into cuMemcpyPeerAsync dstDevice=%llx srcDevice=%llx",dstDevice,srcDevice);
-    ENSURE_RUNNING();
-    CUresult res=CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyPeerAsync,dstDevice,dstContext,srcDevice,srcContext,ByteCount,hStream);
-    return res;
-}
-
-CUresult cuMemsetD16_v2 ( CUdeviceptr dstDevice, unsigned short us, size_t N ){
-    ENSURE_RUNNING();
-    CUresult res=CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD16_v2,dstDevice,us,N);
-    return res;
-}
-
-CUresult cuMemsetD16Async ( CUdeviceptr dstDevice, unsigned short us, size_t N, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD16Async,dstDevice,us,N,hStream);
-}
-
-CUresult cuMemsetD2D16_v2 ( CUdeviceptr dstDevice, size_t dstPitch, unsigned short us, size_t Width, size_t Height ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D16_v2,dstDevice,dstPitch,us,Width,Height);
-}
-
-CUresult cuMemsetD2D16Async (CUdeviceptr dstDevice, size_t dstPitch, unsigned short us, size_t Width, size_t Height, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D16Async,dstDevice,dstPitch,us,Width,Height,hStream);
-}
-
-CUresult cuMemsetD2D32_v2 ( CUdeviceptr dstDevice, size_t dstPitch, unsigned int  ui, size_t Width, size_t Height ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D32_v2,dstDevice,dstPitch,ui,Width,Height);
-}
-
-
-CUresult cuMemsetD2D32Async ( CUdeviceptr dstDevice, size_t dstPitch, unsigned int  ui, size_t Width, size_t Height, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D32Async,dstDevice,dstPitch,ui,Width,Height,hStream);
-}
-
-CUresult cuMemsetD2D8_v2 ( CUdeviceptr dstDevice, size_t dstPitch, unsigned char  uc, size_t Width, size_t Height ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D8_v2,dstDevice,dstPitch,uc,Width,Height);
-}
-
-CUresult cuMemsetD2D8Async ( CUdeviceptr dstDevice, size_t dstPitch, unsigned char  uc, size_t Width, size_t Height, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD2D8Async,dstDevice,dstPitch,uc,Width,Height,hStream);
-}
-
-CUresult cuMemsetD32_v2 ( CUdeviceptr dstDevice, unsigned int  ui, size_t N ){
-    ENSURE_RUNNING();
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD32_v2,dstDevice,ui,N);
-    return res;
-}
-
-CUresult cuMemsetD32Async ( CUdeviceptr dstDevice, unsigned int  ui, size_t N, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD32Async,dstDevice,ui,N,hStream);
-}   
-
-
-CUresult cuMemsetD8_v2 ( CUdeviceptr dstDevice, unsigned char  uc, size_t N ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD8_v2,dstDevice,uc,N);
-}
-
-CUresult cuMemsetD8Async ( CUdeviceptr dstDevice, unsigned char  uc, size_t N, CUstream hStream ){
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD8Async,dstDevice,uc,N,hStream);
-}
-
-#if CUDA_VERSION < 13000
-CUresult cuMemAdvise( CUdeviceptr devPtr, size_t count, CUmem_advise advice, CUdevice device ){
-    LOG_DEBUG("cuMemAdvise devPtr=%llx count=%lx",devPtr,count);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemAdvise,devPtr,count,advice,device);
-}
-#endif
-
-/* On CUDA 13+, cuda.h #defines cuMemAdvise as cuMemAdvise_v2 with a new CUmemLocation
-   parameter. The old CUdevice wrapper above would conflict, so it is excluded.
-   On CUDA 12 and below, both symbols exist separately and this is the explicit v2 wrapper. */
-CUresult cuMemAdvise_v2(CUdeviceptr devPtr, size_t count, CUmem_advise advice, CUmemLocation location) {
-    LOG_DEBUG("cuMemAdvise_v2 devPtr=%llx count=%lx", devPtr, count);
-    ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry, cuMemAdvise_v2, devPtr, count, advice, location);
 }
 
 #ifdef HOOK_MEMINFO_ENABLE
@@ -530,8 +251,8 @@ CUresult cuMemGetInfo_v2(size_t* free, size_t* total) {
 }
 #endif
 
-CUresult cuMipmappedArrayCreate(CUmipmappedArray* pHandle, 
-                                          const CUDA_ARRAY3D_DESCRIPTOR* pMipmappedArrayDesc, 
+CUresult cuMipmappedArrayCreate(CUmipmappedArray* pHandle,
+                                          const CUDA_ARRAY3D_DESCRIPTOR* pMipmappedArrayDesc,
                                           unsigned int numMipmapLevels) {
     // TODO: compute bytesize
     LOG_DEBUG("cuMipmappedArrayCreate\n");
@@ -546,17 +267,10 @@ CUresult cuMipmappedArrayCreate(CUmipmappedArray* pHandle,
     return res;
 }
 
-CUresult cuMipmappedArrayDestroy(CUmipmappedArray hMipmappedArray) {
-    // TODO: compute bytesize
-    LOG_DEBUG("cuMipmappedArrayDestroy\n");
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMipmappedArrayDestroy, hMipmappedArray);
-    return res;
-}
-
 CUresult cuLaunchKernel ( CUfunction f, unsigned int  gridDimX, unsigned int  gridDimY, unsigned int  gridDimZ, unsigned int  blockDimX, unsigned int  blockDimY, unsigned int  blockDimZ, unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra ){
     ENSURE_RUNNING();
     pre_launch_kernel();
-    if (pidfound==1){ 
+    if (pidfound==1){
         rate_limiter(gridDimX * gridDimY * gridDimZ,
                    blockDimX * blockDimY * blockDimZ);
     }
@@ -579,19 +293,6 @@ CUresult cuLaunchCooperativeKernel ( CUfunction f, unsigned int  gridDimX, unsig
     ENSURE_RUNNING();
     pre_launch_kernel();
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuLaunchCooperativeKernel,f,gridDimX,gridDimY,gridDimZ,blockDimX,blockDimY,blockDimZ,sharedMemBytes,hStream,kernelParams);
-    return res;
-}
-
-CUresult cuMemoryFree(CUdeviceptr dptr) {
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemFree_v2,dptr);
-    return res;
-}
-
-CUresult cuMemAddressReserve(CUdeviceptr* ptr, size_t size,
-    size_t alignment, CUdeviceptr addr, unsigned long long flags ) {
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,
-        cuMemAddressReserve, ptr, size, alignment, addr, flags);
-    LOG_INFO("cuMemAddressReserve:%lx %llx", size, *ptr);
     return res;
 }
 
@@ -623,20 +324,6 @@ CUresult cuMemRelease(CUmemGenericAllocationHandle handle) {
     return res;
 }
 
-CUresult cuMemMap( CUdeviceptr ptr, size_t size, size_t offset, CUmemGenericAllocationHandle handle, unsigned long long flags ) {
-    LOG_INFO("cuMemMap:%lld(%llx,%llx)", size, ptr, offset);
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemMap,ptr,size,offset,handle,flags);
-    return res;
-}
-
-CUresult cuMemImportFromShareableHandle(CUmemGenericAllocationHandle* handle,
-    void* osHandle, CUmemAllocationHandleType shHandleType) {
-    LOG_INFO("cuMemImportFromSharableHandle");
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,
-        cuMemImportFromShareableHandle, handle, osHandle, shHandleType);
-    return res;
-}
-
 CUresult cuMemAllocAsync(CUdeviceptr *dptr, size_t bytesize, CUstream hStream) {
     LOG_DEBUG("cuMemAllocAsync:%ld",bytesize);
     return allocate_async_raw(dptr,bytesize,hStream);
@@ -648,207 +335,15 @@ CUresult cuMemFreeAsync(CUdeviceptr dptr, CUstream hStream) {
         return CUDA_SUCCESS;
     }
     CUresult res = free_raw_async(dptr,hStream);
-    //CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemFreeAsync,dptr,hStream); 
+    //CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemFreeAsync,dptr,hStream);
     LOG_DEBUG("after free_raw_async dptr=%p res=%d",(void *)dptr,res);
     return res;
 }
 
-CUresult cuMemHostGetDevicePointer_v2(CUdeviceptr *pdptr, void *p, unsigned int Flags){
-    LOG_INFO("cuMemHostGetDevicePointer");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemHostGetDevicePointer_v2,pdptr,p,Flags);
+CUresult cuMemoryAllocate(CUdeviceptr* dptr, size_t bytesize, void* data) {
+    return cuMemAlloc_v2(dptr, bytesize);
 }
 
-CUresult cuMemHostGetFlags(unsigned int *pFlags, void *p){
-    LOG_INFO("cuMemHostGetFlags");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemHostGetFlags,pFlags,p);
-}
-
-CUresult cuMemPoolTrimTo(CUmemoryPool pool, size_t minBytesToKeep){
-    LOG_DEBUG("cuMemPoolTrimTo");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolTrimTo,pool,minBytesToKeep);
-}
-
-CUresult cuMemPoolSetAttribute(CUmemoryPool pool, CUmemPool_attribute attr, void *value) {
-    LOG_DEBUG("cuMemPoolSetAttribute");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolSetAttribute,pool,attr,value);
-}
-
-CUresult cuMemPoolGetAttribute(CUmemoryPool pool, CUmemPool_attribute attr, void *value) {
-    CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolGetAttribute,pool,attr,value);
-    LOG_INFO("cuMemPoolGetAttribute %d %ld",attr,*(long *)value);
-    return res;
-}
-
-CUresult cuMemPoolSetAccess(CUmemoryPool pool, const CUmemAccessDesc *map, size_t count) {
-    LOG_DEBUG("cuMemPoolSetAccess");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolSetAccess,pool,map,count);
-}
-
-CUresult cuMemPoolGetAccess(CUmemAccess_flags *flags, CUmemoryPool memPool, CUmemLocation *location) {
-    LOG_DEBUG("cuMemPoolGetAccess");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolGetAccess,flags,memPool,location);
-}
-
-CUresult cuMemPoolCreate(CUmemoryPool *pool, const CUmemPoolProps *poolProps) {
-    LOG_DEBUG("cuMemPoolCreate");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolCreate,pool,poolProps);
-}
-
-CUresult cuMemPoolDestroy(CUmemoryPool pool) {
-    LOG_DEBUG("cuMemPoolDestroy");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolDestroy,pool);
-}
-
-CUresult cuMemAllocFromPoolAsync(CUdeviceptr *dptr, size_t bytesize, CUmemoryPool pool, CUstream hStream) {
-    LOG_DEBUG("cuMemAllocFromPoolAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemAllocFromPoolAsync,dptr,bytesize,pool,hStream);
-}
-
-CUresult cuMemPoolExportToShareableHandle(void *handle_out, CUmemoryPool pool, CUmemAllocationHandleType handleType, unsigned long long flags) {
-    LOG_DEBUG("cuMemPoolExportToShareableHandle");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolExportToShareableHandle,handle_out,pool,handleType,flags);
-}
-
-CUresult cuMemPoolImportFromShareableHandle(
-        CUmemoryPool *pool_out,
-        void *handle,
-        CUmemAllocationHandleType handleType,
-        unsigned long long flags) {
-            LOG_DEBUG("cuMemPoolImportFromShareableHandle");
-            return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolImportFromShareableHandle,pool_out,handle,handleType,flags);
-        }
-
-CUresult cuMemPoolExportPointer(CUmemPoolPtrExportData *shareData_out, CUdeviceptr ptr) {
-    LOG_DEBUG("cuMemPoolExportPointer");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolExportPointer,shareData_out,ptr);
-}
-
-CUresult cuMemPoolImportPointer(CUdeviceptr *ptr_out, CUmemoryPool pool, CUmemPoolPtrExportData *shareData) {
-    LOG_DEBUG("cuMemPoolImportPointer");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPoolImportPointer,ptr_out,pool,shareData);
-}
-/*
-CUresult cuMemcpy2D(const CUDA_MEMCPY2D *pCopy) {
-    LOG_DEBUG("cuMemcpy2D");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy2D,pCopy);
-}*/
-
-CUresult cuMemcpy2D_v2(const CUDA_MEMCPY2D *pCopy) {
-    LOG_DEBUG("cuMemcpy2D_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry, cuMemcpy2D, pCopy);
-}
-/*
-CUresult cuMemcpy2DUnaligned(const CUDA_MEMCPY2D *pCopy) {
-    LOG_DEBUG("cuMemcpy2DUnaligned");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy2DUnaligned,pCopy);
-}*/
-
-CUresult cuMemcpy2DUnaligned_v2(const CUDA_MEMCPY2D *pCopy) {
-    LOG_DEBUG("cuMemcpy2DUnaligned_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy2DUnaligned_v2,pCopy);
-}
-/*
-CUresult cuMemcpy2DAsync(const CUDA_MEMCPY2D *pCopy, CUstream hStream) {
-    LOG_DEBUG("cuMemcpy2DAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy2DAsync,pCopy,hStream);
-}*/
-
-CUresult cuMemcpy2DAsync_v2(const CUDA_MEMCPY2D *pCopy, CUstream hStream) {
-    LOG_DEBUG("cuMemcpy2DAsync_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy2DAsync,pCopy,hStream);
-}
-
-/*
-CUresult cuMemcpy3D(const CUDA_MEMCPY3D *pCopy) {
-    LOG_DEBUG("cuMemcpy3D");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3D,pCopy);
-}*/
-
-CUresult cuMemcpy3D_v2(const CUDA_MEMCPY3D *pCopy) {
-    LOG_DEBUG("cuMemcpy3D_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3D_v2,pCopy);
-}
-/*
-CUresult cuMemcpy3DAsync(const CUDA_MEMCPY3D *pCopy, CUstream hStream) {
-    LOG_DEBUG("cuMemcpy3DAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3DAsync,pCopy,hStream);
-}*/
-
-CUresult cuMemcpy3DAsync_v2(const CUDA_MEMCPY3D *pCopy, CUstream hStream) {
-    LOG_DEBUG("cuMemcpy3DAsync_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3DAsync_v2,pCopy,hStream);
-}
-
-CUresult cuMemcpy3DPeer(const CUDA_MEMCPY3D_PEER *pCopy) {
-    LOG_DEBUG("cuMemcpy3DPeer");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3DPeer,pCopy);
-}
-
-CUresult cuMemcpy3DPeerAsync(const CUDA_MEMCPY3D_PEER *pCopy, CUstream hStream) {
-    LOG_DEBUG("cuMemcpy3DPeerAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpy3DPeerAsync,pCopy,hStream);
-}
-
-#if CUDA_VERSION < 13000
-CUresult cuMemPrefetchAsync(CUdeviceptr devPtr, size_t count, CUdevice dstDevice, CUstream hStream) {
-    LOG_DEBUG("cuMemPrefetchAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemPrefetchAsync,devPtr,count,dstDevice,hStream);
-}
-#endif
-
-CUresult cuMemPrefetchAsync_v2(CUdeviceptr devPtr, size_t count, CUmemLocation location, unsigned int flags,
-                               CUstream hStream) {
-    LOG_DEBUG("cuMemPrefetchAsync_v2");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry, cuMemPrefetchAsync_v2, devPtr, count, location, flags, hStream);
-}
-
-CUresult cuMemRangeGetAttribute(void *data, size_t dataSize, CUmem_range_attribute attribute, CUdeviceptr devPtr, size_t count) {
-    LOG_DEBUG("cuMemRangeGetAttribute");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemRangeGetAttribute,data,dataSize,attribute,devPtr,count);
-}
-
-CUresult cuMemRangeGetAttributes(void **data, size_t *dataSizes, CUmem_range_attribute *attributes, size_t numAttributes, CUdeviceptr devPtr, size_t count) {
-    LOG_DEBUG("cuMemRangeGetAttributes");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemRangeGetAttributes,data,dataSizes,attributes,numAttributes,devPtr,count);
-}
-
-/* External Resource Management */
-CUresult cuImportExternalMemory(CUexternalMemory *extMem_out, const CUDA_EXTERNAL_MEMORY_HANDLE_DESC *memHandleDesc) {
-    LOG_DEBUG("cuImportExternalMemory");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuImportExternalMemory,extMem_out,memHandleDesc);
-}
-
-CUresult cuExternalMemoryGetMappedBuffer(CUdeviceptr *devPtr, CUexternalMemory extMem, const CUDA_EXTERNAL_MEMORY_BUFFER_DESC *bufferDesc) {
-    LOG_DEBUG("cuExternalMemoryGetMappedBuffer");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuExternalMemoryGetMappedBuffer,devPtr,extMem,bufferDesc);
-}
-
-CUresult cuExternalMemoryGetMappedMipmappedArray(CUmipmappedArray *mipmap, CUexternalMemory extMem, const CUDA_EXTERNAL_MEMORY_MIPMAPPED_ARRAY_DESC *mipmapDesc) {
-    LOG_DEBUG("cuExternalMemoryGetMappedMipmappedArray");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuExternalMemoryGetMappedMipmappedArray,mipmap,extMem,mipmapDesc);
-}
-
-CUresult cuDestroyExternalMemory(CUexternalMemory extMem) {
-    LOG_DEBUG("cuDestroyExternalMemory");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuDestroyExternalMemory,extMem);
-}
-
-CUresult cuImportExternalSemaphore(CUexternalSemaphore *extSem_out, const CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC *semHandleDesc) {
-    LOG_DEBUG("cuImportExternalSemaphore");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuImportExternalSemaphore,extSem_out,semHandleDesc);
-}
-
-CUresult cuSignalExternalSemaphoresAsync(const CUexternalSemaphore *extSemArray, const CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS *paramsArray, unsigned int numExtSems, CUstream stream) {
-    LOG_DEBUG("cuSignalExternalSemaphoresAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuSignalExternalSemaphoresAsync,extSemArray,paramsArray,numExtSems,stream);
-}
-
-CUresult cuWaitExternalSemaphoresAsync(const CUexternalSemaphore *extSemArray, const CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS *paramsArray, unsigned int numExtSems, CUstream stream) {
-    LOG_DEBUG("cuWaitExternalSemaphoresAsync");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuWaitExternalSemaphoresAsync,extSemArray,paramsArray,numExtSems,stream);
-}
-
-CUresult cuDestroyExternalSemaphore(CUexternalSemaphore extSem) {
-    LOG_DEBUG("cuDestroyExternalSemaphore");
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuDestroyExternalSemaphore,extSem);
+CUresult cuMemoryFree(CUdeviceptr dptr) {
+    return cuMemFree_v2(dptr);
 }
