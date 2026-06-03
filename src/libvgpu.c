@@ -141,46 +141,7 @@ FUNC_ATTR_VISIBLE void* dlsym(void* handle, const char* symbol) {
 }
 
 void* __dlsym_hook_section(void* handle, const char* symbol) {
-    int it;
-    for (it=0;it<CUDA_ENTRY_END;it++){
-        if (strcmp(cuda_library_entry[it].name,symbol) == 0){
-            if (cuda_library_entry[it].fn_ptr == NULL) {
-                LOG_WARN("NEED TO RETURN NULL");
-                return NULL;
-            }else{
-                break;
-            }
-        }
-    }
-    DLSYM_HOOK_FUNC(cuInit);
-    /* DLSYM_HOOK_FUNC(cuGetProcAddress);    -- COMMENTED OUT: perf impact */
-    /* DLSYM_HOOK_FUNC(cuGetProcAddress_v2); */
-    DLSYM_HOOK_FUNC(cuDevicePrimaryCtxRetain);
-    DLSYM_HOOK_FUNC(cuDevicePrimaryCtxRelease_v2);
-    DLSYM_HOOK_FUNC(cuDriverGetVersion);
-    DLSYM_HOOK_FUNC(cuDeviceTotalMem_v2);
-    DLSYM_HOOK_FUNC(cuMemAlloc_v2);
-    DLSYM_HOOK_FUNC(cuMemAllocHost_v2);
-    DLSYM_HOOK_FUNC(cuMemAllocManaged);
-    DLSYM_HOOK_FUNC(cuMemAllocPitch_v2);
-    DLSYM_HOOK_FUNC(cuMemFree_v2);
-    DLSYM_HOOK_FUNC(cuMemHostAlloc);
-    DLSYM_HOOK_FUNC(cuMemHostRegister_v2);
-    DLSYM_HOOK_FUNC(cuPointerGetAttributes);
-    DLSYM_HOOK_FUNC(cuMipmappedArrayCreate);
-    DLSYM_HOOK_FUNC(cuLaunchKernel);
-    DLSYM_HOOK_FUNC(cuLaunchKernelEx);
-    DLSYM_HOOK_FUNC(cuLaunchCooperativeKernel);
-    DLSYM_HOOK_FUNC(cuMemCreate);
-    DLSYM_HOOK_FUNC(cuMemRelease);
-    DLSYM_HOOK_FUNC(cuMemAllocAsync);
-    DLSYM_HOOK_FUNC(cuMemFreeAsync);
-    DLSYM_HOOK_FUNC(cuMemoryAllocate);
-    DLSYM_HOOK_FUNC(cuMemoryFree);
-#ifdef HOOK_MEMINFO_ENABLE
-    DLSYM_HOOK_FUNC(cuMemGetInfo_v2);
-#endif
-    return NULL;
+    return cu_hook_lookup(symbol);
 }
 
 void* __dlsym_hook_section_nvml(void* handle, const char* symbol) {

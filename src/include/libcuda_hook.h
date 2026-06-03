@@ -103,15 +103,23 @@ typedef enum {
     CUDA_OVERRIDE_ENUM(cuSignalExternalSemaphoresAsync),
     CUDA_OVERRIDE_ENUM(cuWaitExternalSemaphoresAsync),
     CUDA_OVERRIDE_ENUM(cuDestroyExternalSemaphore),
-    /* Proc Address (COMMENTED OUT: perf impact) */
-    /*CUDA_OVERRIDE_ENUM(cuGetProcAddress),*/
-    /*CUDA_OVERRIDE_ENUM(cuGetProcAddress_v2),*/
+    /* Proc Address */
+    CUDA_OVERRIDE_ENUM(cuGetProcAddress),
+    CUDA_OVERRIDE_ENUM(cuGetProcAddress_v2),
     CUDA_ENTRY_END
 }cuda_override_enum_t;
 
 extern cuda_entry_t cuda_library_entry[];
+extern void *cu_hook_lookup(const char *symbol);
+
+void *find_symbols_in_table(const char *symbol);
+void *find_symbols_in_table_by_cudaversion(const char *symbol, int cudaVersion);
+
+extern CUresult (*cuGetProcAddress_real)(const char*, void**, int, cuuint64_t);
 
 #endif
 
-/*#undef cuGetProcAddress
-CUresult cuGetProcAddress( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags );*/
+#undef cuGetProcAddress
+CUresult cuGetProcAddress( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags );
+#undef cuGetProcAddress_v2
+CUresult cuGetProcAddress_v2( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags, CUdriverProcAddressQueryResult *symbolStatus );
