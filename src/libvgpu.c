@@ -153,8 +153,8 @@ void* __dlsym_hook_section(void* handle, const char* symbol) {
         }
     }
     DLSYM_HOOK_FUNC(cuInit);
-    DLSYM_HOOK_FUNC(cuGetProcAddress);
-    DLSYM_HOOK_FUNC(cuGetProcAddress_v2);
+    /* DLSYM_HOOK_FUNC(cuGetProcAddress);    -- COMMENTED OUT: perf impact */
+    /* DLSYM_HOOK_FUNC(cuGetProcAddress_v2); */
     DLSYM_HOOK_FUNC(cuDevicePrimaryCtxRetain);
     DLSYM_HOOK_FUNC(cuDevicePrimaryCtxRelease_v2);
     DLSYM_HOOK_FUNC(cuDriverGetVersion);
