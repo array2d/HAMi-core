@@ -42,7 +42,7 @@ void log_utils_init(void);
         }\
     }
 #define LOG_MSG(msg, ...) { \
-    if (g_log_level >= 2) {\
+    if (g_log_level >= 3) {\
         if (fp1==NULL) fp1 = fopen ("/tmp/vgpulog", "a"); \
         fprintf(fp1, "[HAMI-core Msg(%d:%ld:%s:%d)]: "msg"\n", getpid(),pthread_self(),basename(__FILE__),__LINE__,##__VA_ARGS__); \
          }\
@@ -68,7 +68,7 @@ void log_utils_init(void);
         }\
     }
 #define LOG_MSG(msg, ...) { \
-    if (g_log_level >= 2) {\
+    if (g_log_level >= 3) {\
         fprintf(stderr, "[HAMI-core Msg(%d:%ld:%s:%d)]: "msg"\n", getpid(),pthread_self(),basename(__FILE__),__LINE__,##__VA_ARGS__); \
          }\
     }
